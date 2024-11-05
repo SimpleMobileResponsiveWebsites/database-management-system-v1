@@ -3,15 +3,21 @@ import sqlalchemy as sa
 import pandas as pd
 from io import StringIO
 
-# Connect to the database
+# Connect to the SQLite database
 engine = sa.create_engine('sqlite:///database.db')
 
 def main():
-    st.title("Database Management Application")
+    st.set_page_config(page_title="Database Management System", layout="wide")
+    st.title("Database Management System")
 
     # Display the database schema
     st.subheader("Database Schema")
-    st.image("database_schema.png", use_column_width=True)
+    try:
+        with open("database_schema.png", "rb") as f:
+            schema_image = f.read()
+        st.image(schema_image, use_column_width=True)
+    except FileNotFoundError:
+        st.error("Database schema image not found.")
 
     # Allow user to upload data
     st.subheader("Upload Data")
@@ -21,7 +27,7 @@ def main():
         data = pd.read_csv(uploaded_file)
 
         # Ask the user which table to upload the data to
-        table_name = st.selectbox("Select a table to upload data to", ["products", "brands", "categories", "customers", "order_items", "orders", "stores"])
+        table_name = st.selectbox("Select a table to upload data to", get_table_names(engine))
 
         if st.button("Upload Data"):
             try:
@@ -41,6 +47,13 @@ def main():
             st.dataframe(result)
         except Exception as e:
             st.error(f"Error executing the query: {e}")
+
+def get_table_names(engine):
+    """
+    Get the names of all tables in the database.
+    """
+    inspector = sa.inspect(engine)
+    return inspector.get_table_names()
 
 if __name__ == "__main__":
     main()
